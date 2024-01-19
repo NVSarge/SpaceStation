@@ -63,11 +63,11 @@ namespace SpaceStation
 
         public void JsonLoad(string fname)
         {
-           // string js = JsonConvert.SerializeObject(this, Formatting.Indented);
-           // File.WriteAllText(options.selector+".json", js);
+            // string js = JsonConvert.SerializeObject(this, Formatting.Indented);
+            // File.WriteAllText(options.selector+".json", js);
             string load = "";
             load = File.ReadAllText(fname);
-            var T=JsonConvert.DeserializeObject<GlobalEvent>(load);
+            var T = JsonConvert.DeserializeObject<GlobalEvent>(load);
             probability = T.Probability;
             prereqBlock = T.PrereqBlock;
             prereq = T.Prereq;
@@ -111,9 +111,13 @@ namespace SpaceStation
         {
             List<string> retval = new List<string>();
             var c = options.GetOpts();
-            foreach (var s in c)
+            if (c != null)
             {
-                retval.Add(s.selector);
+                foreach (var s in c)
+                {
+
+                    retval.Add(s.selector);
+                }
             }
             return retval;
         }

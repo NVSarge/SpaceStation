@@ -150,14 +150,6 @@ namespace SpaceStation
         }
 
 
-        public void GetBrief(Block b, Object o = null)
-        {
-            foreach (var bl in Blocks)
-            {
-                Log.Logout += "\n\r" + bl.name + "::" + bl.BackLog;
-            }
-
-        }
 
         public void DockBlockLO(Block b, Object o = null)
         {
@@ -222,9 +214,8 @@ namespace SpaceStation
         public string name { get => Name; set => Name = value; }
 
         public int population { get => (int)Commodities.Reses["pops"].amount; set => Commodities.Reses["pops"].amount = value; }
-
-        int DaysCycled;
-        public int daysCycled { get => DaysCycled; set => DaysCycled = value; }
+        
+        public int daysCycled { get => DayTime.Day; set =>DayTime.Day = value; }
         public Resourses Commodities { get => commodities; set => commodities = value; }
 
         Resourses commodities;
@@ -393,8 +384,7 @@ namespace SpaceStation
         public string FormStationInfo()
         {
             string retval = "\n\r";
-            retval += "/--------------------------------------------------------------";
-            retval += "\n\r│Resources:" + "\n\r│";
+            retval += "\n\r│Storage-------------------------------------------------------\n\r│";
             foreach (var r in Commodities.Reses)
             {
                 int trend = 0;
@@ -405,52 +395,57 @@ namespace SpaceStation
                 string trendcolored = "";
                 if (trend < 0)
                 {
-                    trendcolored = "~↓" + -trend + "~";
+                    trendcolored = "~R↓" + -trend + "~W";
 
                 }
                 else
                 {
-                    trendcolored = "↑" + trend;
+                    trendcolored = "~G↑" + trend + "~W";
                 }
                 retval += r.Key + "=" + Math.Max(0, r.Value.amount) + "⌂" + "(" + trendcolored + ")" + "   ";
             }
-            retval += "\n\r\\--------------------------------------------------------------\n\r";
-            retval += "/--------------------------------------------------------------";
-            retval += "\n\r|LowOrbit:~ ~ ";
-            foreach (var b in LowOrbit)
-            {
-                retval += "[" + b.Item1.name + "]" + "(" + b.Item2 + " days left)" + "\n\r";
-            }
-
-            retval += "\n\r\\--------------------------------------------------------------\n\r";
-            retval += "/--------------------------------------------------------------";
-            retval += "\n\r|" + name + ":~ ~ ";
-            retval += "«";
+            retval += "\n\r│--------------------------------------------------------------\n\r\n\r";
+           
+            retval += "/"+name+ "(~Y┌☻┐-you,~M└¤┘-enemy~W)------------------------------------\n\r";
             foreach (var b in Blocks)
             {
                 string me = "";
                 if (b == Walkin)
                 {
-                    me = " ☻ ";
+                    me = "~Y┌☻┐~W";
                 }
                 if (b == Alien)
                 {
-                    me = " §  ";
+                    me = "~M└¤┘~W";
                 }
-                if (b.isOnline())
+                string blockView = "";
+                if (b.CurrentState.MyState == BlockStatus.OK)
                 {
-                    retval += "╣▒▒" + b.name + me + "▒▒╠";
+                    blockView = "~G╣▒▒" + b.name + me + "▒▒╠~W";
                 }
-                else
+                if (b.CurrentState.MyState == BlockStatus.DARK)
                 {
-                    retval += "╣~▒▒" + b.name + me + "▒▒~╠";
+                    blockView = "~A╣▒▒" + b.name + me + "▒▒╠~W";
                 }
+                if (b.CurrentState.MyState == BlockStatus.ALERT)
+                {
+                    blockView = "~R╣▒▒" + b.name + me + "▒▒╠~W";
+                }
+                retval += blockView;
+                
                 if (Blocks.Find(b).Next != null)
                 {
                     retval += "══";
                 }
             }
-            retval += "»";
+            retval += "\n\r\\--------------------------------------------------------------\n\r\n\r";
+            retval += "/LowOrbit------------------------------------------------------\n\r";
+            
+            foreach (var b in LowOrbit)
+            {
+                retval += "[" + b.Item1.name + "]" + "(" + b.Item2 + " days left)" + "\n\r";
+            }
+
             retval += "\n\r\\--------------------------------------------------------------\n\r";
             return retval;
         }

@@ -1,9 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SpaceStation
 {
@@ -29,10 +27,64 @@ namespace SpaceStation
             Reses = new Dictionary<string, Resourse>();
         }
     }
+
+    public static class DayTime
+    {
+        static int day;   
+        public static int Day { get => day; set => day = value; }
+    }
+
+    public class LogRecord
+    {
+        public int date;
+        public string message;
+        public  string urgency; // color code
+        public LogRecord()
+        {
+            date = 0;
+            message = "";
+            urgency = "~W";
+        }
+
+        public LogRecord(int date, string message, string urgency)
+        {
+            this.date = date;
+            this.message = message;
+            this.urgency = urgency;
+        }
+    }
+
     public static class Log
     {
-        static string logout;
-        public static string Logout { get => logout; set => logout = value; }
+        static List<LogRecord> records=new List<LogRecord>();
+
+        public static string GetRecords(int n=10)
+        {
+            int last = Math.Min(records.Count, n);
+            string retval = "";
+            for(int i = records.Count-last; i < records.Count; i++)
+            {
+                retval += records[i].urgency + " [" + records[i].date + "] : " + records[i].message + "\n\r";
+            }
+            return retval;
+        }
+        public static void LogBasic(string v)
+        {
+            records.Add(new LogRecord(DayTime.Day, v, "~W"));
+
+        }
+        public static void LogWarning(string v)
+        {
+            records.Add(new LogRecord(DayTime.Day, v, "~Y"));
+
+        }
+        public static void LogAlert(string v)
+        {
+            records.Add(new LogRecord(DayTime.Day, v, "~R"));
+
+        }       
+        
+
     }
 
     class Program
@@ -55,7 +107,7 @@ namespace SpaceStation
             ISS.DockBlock(new Operatable("solar panels", new Resourse("spares", 1), new Resourse("zap", 1), 0));
             ISS.DockBlock(new ScifiBlock("orbit lab", new Resourse("zap", 1), new Resourse("spares", 1), 0));
 
-            ISS.switchBlock("water refinery", true);
+            ISS.switchBlock("water refinery", true);   
             ISS.switchBlock("docking bay", true);
 
             ///
@@ -112,14 +164,15 @@ namespace SpaceStation
 
                 isEnd = isEnd || !ISS.CycleDay();
                 Report(ISS);
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("\n\r[" + ISS.Walkin.name + " status:" + ISS.Walkin.CurrentState.MyState + "]:");
-                var uis = ISS.Walkin.BlockActions.FormActionList();  
-                Console.Write(uis);
+                
+                //block info
+                Console.WriteLine("\n\rYou are in [" + ISS.Walkin.name + "],(" + ISS.Walkin.CurrentState.MyState + "):");
+                var uis = ISS.Walkin.BlockActions.FormActionList();
+                PrintDecorated(uis);
 
                 Console.WriteLine("\n\r" + ISS.name + ":");
                 uis = ActionList.FormActionList();
-                Console.Write(uis);
+                PrintDecorated(uis);
 
                 Console.Write(":>");
                 var kk = Console.ReadLine();
@@ -178,13 +231,14 @@ namespace SpaceStation
                     }
                 }
                 Console.Clear();
-                OperateGlobalEvents(ISS);
-                Console.Write("Press any key...");
+                //OperateGlobalEvents(ISS);
+                PrintDecorated("\n\rEvents Log:\n\r" + Log.GetRecords());
+                Console.Write("\n\rPress any key...");
                 Console.ReadLine();
+                Console.Clear();
 
             }
             Console.Clear();
-            Log.Logout = "";
 
             void OperateGlobalEvents(Station station)
             {
@@ -196,11 +250,14 @@ namespace SpaceStation
                     while (opts != null)
                     {
                         int i = 1;
+                        string Sel = "";
                         foreach (var o in opts)
                         {
-                            Console.WriteLine(i + ". " + o);
+                           Sel+="~G"+i + ". " + o+"~W";
                             i++;
                         }
+                        PrintDecorated(Sel);
+
                         var input = "";
                         int inpo = -1;
                         while (inpo < 0 || inpo > opts.Count)
@@ -231,11 +288,13 @@ namespace SpaceStation
                         if (newOpts != null)
                         {
                             opts.Clear();
+                            Sel = "";
                             foreach (var o in newOpts)
                             {
-                                Console.WriteLine(o.outcome);
+                                Sel+="~G"+o.outcome+"~W";
                                 opts.Add(o.selector);
                             }
+                            PrintDecorated(Sel);
 
                         }else
                         {
@@ -255,34 +314,79 @@ namespace SpaceStation
 
         private static void Report(Station ISS, bool isDetailed = true)
         {
-            if (isDetailed)
+
+            ///collecting
+            String StationInfo = "~CHello, this is " + ISS.name + " speaking...";
+            if (!isDetailed)
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("Hello, this is " + ISS.name + " speaking...");
+                StationInfo = "";
             }
-            Console.ForegroundColor = ConsoleColor.Green;
-            String StationInfo = "Day number " + ISS.daysCycled + "\n\rLatest Events:";
-            StationInfo += Log.Logout;
+            StationInfo += "~Wday ~G" + ISS.daysCycled + "~W";            
             if (isDetailed)
             {
                 StationInfo += ISS.FormStationInfo();
             }
-            var decoratedstrings = StationInfo.Split('~');
-            foreach (var ds in decoratedstrings)
-            {
 
-                Console.Write(ds);
-                if (Console.ForegroundColor.Equals(ConsoleColor.Red))
+            //printout
+            PrintDecorated(StationInfo);
+          
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine();
+        }
+
+        private static void PrintDecorated(string outString)
+        {
+            if (outString.Length > 0)
+            {
+                var decoratedstrings = outString.Split(new char[] { '~' }, StringSplitOptions.RemoveEmptyEntries); //~X -set color X= R-red G-green B-blue C-cyan Y-yellow M-magenta K-black W-white A-gray
+                Console.ForegroundColor = ConsoleColor.White;
+                if (decoratedstrings.Length > 1)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
+                    foreach (var ds in decoratedstrings)
+                    {
+                        char L = ds[0];
+                        switch (L)
+                        {
+                            case 'R':
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                break;
+                            case 'G':
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                break;
+                            case 'B':
+                                Console.ForegroundColor = ConsoleColor.Blue;
+                                break;
+                            case 'M':
+                                Console.ForegroundColor = ConsoleColor.Magenta;
+                                break;
+                            case 'Y':
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                break;
+                            case 'C':
+                                Console.ForegroundColor = ConsoleColor.Cyan;
+                                break;
+                            case 'K':
+                                Console.ForegroundColor = ConsoleColor.Black;
+                                break;
+                            case 'W':
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                break;
+                            case 'A':
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                break;
+
+                        }
+                        string subDs = ds.Substring(1);
+                        Console.Write(subDs);
+
+
+                    }
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(decoratedstrings[0]);
                 }
             }
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine();
         }
     }
 }

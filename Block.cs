@@ -26,19 +26,20 @@ namespace SpaceStation
             currentState = new Block_State();
             blockDefaultActions = new l_Ui();
             description = "";
-            BackLog = "\n\rLog\n\r";
+            BackLog = "";
             avaliableEvents = new List<Block_State>();
             //demo events
             avaliableEvents.Add(new Block_State("on", "all systems online", BlockStatus.OK, P, 0.0, C));
-            avaliableEvents.Add(new Block_State("off", "all systems ofline", BlockStatus.DARK, null, 0.0, null));
-            avaliableEvents.Add(new Block_State("explosion", "some oxigen canister has exploded in flames", BlockStatus.ALERT, new Resourse("fire", 1), 0.01, new Resourse("pops", 1)));
-            avaliableEvents.Add(new Block_State("fire extinguished", "fire supress system neutralized threat", BlockStatus.WRECKED, new Resourse("chaos", 1), 0.0, new Resourse("water", 1)));
+            avaliableEvents.Add(new Block_State("off", "all systems offline", BlockStatus.DARK, null, 0.0, null));
             avaliableEvents.Add(new Block_State("repaired", "repair system neutralized threat", BlockStatus.DARK, new Resourse("chaos", 1), 0.0, new Resourse("spares", 1)));
+            avaliableEvents.Add(new Block_State("explosion", "some oxigen canister has exploded in flames", BlockStatus.ALERT, new Resourse("fire", 1), 0.3, new Resourse("pops", 1)));
+            avaliableEvents.Add(new Block_State("fire extinguished", "fire supress system neutralized threat", BlockStatus.WRECKED, new Resourse("chaos", 1), 0.0, new Resourse("water", 1)));            
+            avaliableEvents.Add(new Block_State("normal", "system operates normal", BlockStatus.NOSTATUS, null, 1.0,null));
             ///
             ///
 
             ///
-            
+
             name = n;
             currentState.MyState = BlockStatus.DARK;
             currentState.Output = P;
@@ -160,8 +161,13 @@ namespace SpaceStation
         void OperateEvent(Resourses reses, double populus, int cnum, Block_State FirstTohappen)
         {
             currentState = FirstTohappen;
-            BackLog += "\n\rDay num: " + cnum.ToString() + ", " + FirstTohappen.description;
-            Log.Logout += "\n\r" + "[" + name + "]: " + description;
+            
+            if(DayTime.Day!=0)
+            {
+                BackLog = "\n\r[" + name + "]: " + currentState.description + " " + description;
+            }
+            if(FirstTohappen.)
+            Log.LogBasic("[" + name + "]: " + currentState.description+" "+description);
         }
     }
     public class Operatable : Block
@@ -183,16 +189,14 @@ namespace SpaceStation
         public void TurnPowerOff(Object o)
         {
             this.switchPower(false);
-            Log.Logout += "\n\r" + name + " power off" + BackLog;
         }
         public void TurnPowerOn(Object o)
         {
             this.switchPower(true);
-            Log.Logout += "\n\r" + name + " power on" + BackLog;
         }
         public void GetLogs(Object o)
         {
-            Log.Logout += "\n\r" + name + ":"+CurrentState.MyState+":" + BackLog;
+            //Log.LogBasic( "\n\r"+name + ","+CurrentState.MyState+":" + BackLog;
         }
     }
     public class ScifiBlock : Operatable
@@ -213,8 +217,8 @@ namespace SpaceStation
                 CallEvent("develop", rr, ((Station)o).population, ((Station)o).daysCycled);
 
             }
-            BackLog += "\n\r [day " + ((Station)o).daysCycled + "] - extra resourses developed";
-            Log.Logout += BackLog;
+            BackLog += "\n\r"+DayTime.Day+" extra resourses developed";
+            Log.LogBasic("extra resourses developed");
         }
     }
     public class FarmingBlock : Operatable
@@ -236,8 +240,8 @@ namespace SpaceStation
                 CallEvent("harvested", rr, ((Station)o).population, ((Station)o).daysCycled);
 
             }
-            BackLog += "\n\r [day "+((Station)o).daysCycled+"] - extra resourses harvested";
-            Log.Logout += BackLog;
+            BackLog += "\n\r" + DayTime.Day + " extra resourses harvested";
+            Log.LogBasic("extra resourses harvested");
         }
     }
 }

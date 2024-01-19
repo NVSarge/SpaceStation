@@ -19,7 +19,7 @@ namespace SpaceStation
             int count = 1;
             foreach (var a in Actions)
             {
-                retval += count.ToString() + ": " + a.option + "\n\r";
+                retval += "~B"+count.ToString() + ": " + a.option + "\n\r~W";
                 count++;
             }
             return retval;
@@ -41,7 +41,7 @@ namespace SpaceStation
             char count = 'a';
             foreach (var a in lActions)
             {
-                retval += count.ToString() + ": " + a.option + "\n\r";
+                retval += "~G"+count.ToString() + ": " + a.option + "\n\r~W";
                 count++;
             }
             return retval;
