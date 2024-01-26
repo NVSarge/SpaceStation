@@ -146,6 +146,10 @@ namespace SpaceStation
             Apower.BindAction(new GlobalAction.ToDo(ISS.TravelLeft));
             ActionList.Actions.Add(Apower);
 
+            Apower = new GlobalAction("end duty", false);
+            Apower.BindAction(new GlobalAction.ToDo(ISS.EndDay));
+            ActionList.Actions.Add(Apower);
+
             ISS.AddgEvent("Robonuka", 0.0, "Robonuka holiday! All robots get drunk", "none", new Resourse("pops", 13),
                 new List<string>() { "ignore", "give them one extra rest hour" }, new List<string>() { "robots continue to work", "celebration attracts flying by robo-temple" }, new List<Block>() {null, new ScifiBlock("robotemple", new Resourse("spares", 1), new Resourse("zap", 1), 0) });
             
@@ -158,11 +162,17 @@ namespace SpaceStation
             ISS.loadgEventfromjson("Traveler.json");
 
             bool isEnd = false;
-
+            ISS.CycleDay();
             while (!isEnd)
             {
 
-                isEnd = isEnd || !ISS.CycleDay();
+                //isEnd = isEnd;
+
+                PrintDecorated("\n\rEvents Log:\n\r" + Log.GetRecords());
+                Console.Write("\n\rPress any key...");
+                Console.ReadLine();
+                Console.Clear();
+
                 Report(ISS);
                 
                 //block info
@@ -208,11 +218,9 @@ namespace SpaceStation
                             }
                             else
                             {
-                                Act.ExecuteAction(null, null);
+                                Act.ExecuteAction(null, ISS);
                                 Console.Clear();
-                                Report(ISS, false);
-                                Console.Write("Press any key to close the log...");
-                                Console.ReadLine();
+                               
 
                             }
                         }
@@ -224,18 +232,13 @@ namespace SpaceStation
                         var la = ISS.Walkin.BlockActions.lActions.ElementAt(loclaopt);
                         la.ExecuteAction(ISS);
                         Console.Clear();
-                        Report(ISS, false);
-                        Console.Write("Press any key to close the log...");
-                        Console.ReadLine();
+                     
 
                     }
                 }
                 Console.Clear();
                 //OperateGlobalEvents(ISS);
-                PrintDecorated("\n\rEvents Log:\n\r" + Log.GetRecords());
-                Console.Write("\n\rPress any key...");
-                Console.ReadLine();
-                Console.Clear();
+              
 
             }
             Console.Clear();

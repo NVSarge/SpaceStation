@@ -55,7 +55,7 @@ namespace SpaceStation
             gEvents.Add(ge);
         }
 
-        public void Undock(Block b, Object o = null)
+        public bool Undock(Block b, Object o = null)
         {
             if (Blocks.Contains(b))
             {
@@ -79,9 +79,10 @@ namespace SpaceStation
                 b.switchPower(false);
                 LowOrbit.Add(new Tuple<Block, int>(b, 10));
             }
+            return true;
         }
 
-        public void TravelBlock(bool isprev = false)
+        public bool TravelBlock(bool isprev = false)
         {
             if (Walkin != null)
             {
@@ -102,9 +103,10 @@ namespace SpaceStation
                     }
                 }
             }
+            return true;
         }
 
-        public void AlienTravelBlock(bool isprev = false)
+        public bool AlienTravelBlock(bool isprev = false)
         {
             if (Alien != null)
             {
@@ -125,15 +127,17 @@ namespace SpaceStation
                     }
                 }
             }
+            return true;
         }
 
 
-        public void switchBlock(Block b, Object o = null)
+        public bool switchBlock(Block b, Object o = null)
         {
             if (Blocks.Contains(b))
             {
                 b.switchPower(false);
             }
+            return true;
         }
         public bool switchBlock(string name, bool isOnnow)
         {
@@ -151,7 +155,7 @@ namespace SpaceStation
 
 
 
-        public void DockBlockLO(Block b, Object o = null)
+        public bool DockBlockLO(Block b, Object o = null)
         {
             for (int i = 0; i < LowOrbit.Count; i++)
             {
@@ -163,25 +167,28 @@ namespace SpaceStation
                     break;
                 }
             }
+            return true;
         }
 
-        public void FireSystem(Block b, Object o = null)
+        public bool FireSystem(Block b, Object o = null)
         {
             if (b.CurrentState.MyState == BlockStatus.ALERT)
             {
                 b.CallEvent("fire extinguished", Commodities, population, daysCycled);
             }
+            return true;
         }
 
-        public void RepairSystem(Block b, Object o = null)
+        public bool RepairSystem(Block b, Object o = null)
         {
             if (b.CurrentState.MyState == BlockStatus.WRECKED)
             {
                 b.CallEvent("repaired", Commodities, population, daysCycled);
             }
+            return true;
         }
 
-        public void DockBlock(Block b, Object o = null)
+        public bool DockBlock(Block b, Object o = null)
         {
             if (Walkin == null)
             {
@@ -189,24 +196,33 @@ namespace SpaceStation
             }
             b.switchPower(false);
             Blocks.AddLast(b);
+            return true;
         }
 
-        public void SummonBlockLO(Block b, Object o = null)
+        public bool SummonBlockLO(Block b, Object o = null)
         {
            
             b.switchPower(false);
             LowOrbit.Add(new Tuple<Block, int>(b, 10));
+            return true;
+        }
+
+        public bool EndDay(Block b, Object o = null)
+        {
+            bool retval=((Station)o).CycleDay();
+            return retval;
         }
 
 
-
-        public void TravelLeft(Block b, Object o = null)
+        public bool TravelLeft(Block b, Object o = null)
         {
             TravelBlock(true);
+            return true;
         }
-        public void TravelRight(Block b, Object o = null)
+        public bool TravelRight(Block b, Object o = null)
         {
             TravelBlock();
+            return true;
         }
 
 
@@ -419,18 +435,23 @@ namespace SpaceStation
                     me = "~M└¤┘~W";
                 }
                 string blockView = "";
-                if (b.CurrentState.MyState == BlockStatus.OK)
+                switch(b.CurrentState.MyState)
                 {
-                    blockView = "~G╣▒▒" + b.name + me + "▒▒╠~W";
+                    case BlockStatus.OK:
+                        blockView = "~G╣▒▒" + b.name + me + "▒▒╠~W";
+                        break;                    
+                    case BlockStatus.ALERT:
+                        blockView = "~R╣▒▒" + b.name + me + "▒▒╠~W";
+                        break;
+                    default:
+                        blockView = "~A╣▒▒" + b.name + me + "▒▒╠~W";
+                        break;
                 }
-                if (b.CurrentState.MyState == BlockStatus.DARK)
-                {
-                    blockView = "~A╣▒▒" + b.name + me + "▒▒╠~W";
-                }
-                if (b.CurrentState.MyState == BlockStatus.ALERT)
-                {
-                    blockView = "~R╣▒▒" + b.name + me + "▒▒╠~W";
-                }
+
+                
+
+
+
                 retval += blockView;
                 
                 if (Blocks.Find(b).Next != null)

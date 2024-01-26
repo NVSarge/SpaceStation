@@ -37,7 +37,6 @@ namespace SpaceStation
             avaliableEvents.Add(new Block_State("normal", "system operates normal", BlockStatus.NOSTATUS, null, 1.0,null));
             ///
             ///
-
             ///
 
             name = n;
@@ -93,12 +92,12 @@ namespace SpaceStation
             switch (currentState.MyState)
             {
                 case BlockStatus.DARK:
-                    description = "STATUS BLACK";
+                    BackLog+="\n\r"+DayTime.Day+":STATUS BLACK";
                     break;
                 case BlockStatus.OK:
                     {
                         retval=new Resourse(currentState.Output.name, currentState.Output.amount + pop * popmult);
-                        description = "STATUS GREEN";
+                        BackLog += "\n\r" + DayTime.Day + ":STATUS GREEN";
                         ///
                         Block_State FirstTohappen = new Block_State();
                         double maxProb = 0.0;
@@ -122,7 +121,7 @@ namespace SpaceStation
 
                             if (FirstTohappen.MyState != BlockStatus.NOSTATUS)
                             {
-                                description = "STATUS RED";
+                                BackLog += "\n\r.." + DayTime.Day + "..:STATUS YELLOW";
                                 OperateEvent(rr, pop, cyclenum, FirstTohappen);
                             }
                         }
@@ -131,10 +130,10 @@ namespace SpaceStation
                     }
                     break;
                 case BlockStatus.ALERT:
-                    description = "STATUS RED";
+                    BackLog += "\n\r.." + DayTime.Day + "..:STATUS RED";
                     break;
                 case BlockStatus.WRECKED:
-                    description = "STATUS YELLOW";
+                    BackLog += "\n\r.." + DayTime.Day + "..:STATUS YELLOW";
                     break;
                 case BlockStatus.NOSTATUS:
                     currentState.MyState = BlockStatus.DARK;
@@ -164,10 +163,17 @@ namespace SpaceStation
             
             if(DayTime.Day!=0)
             {
-                BackLog = "\n\r[" + name + "]: " + currentState.description + " " + description;
+                BackLog += "\n\r.." + +DayTime.Day +".. "+currentState.description + " " + description;
             }
-            if(FirstTohappen.)
-            Log.LogBasic("[" + name + "]: " + currentState.description+" "+description);
+            if(FirstTohappen.MyState==BlockStatus.OK)
+            {
+                Log.LogBasic("~W[" + name + "]: " + currentState.description + ", " + "~W");
+            }
+            if (FirstTohappen.MyState == BlockStatus.ALERT|| FirstTohappen.MyState == BlockStatus.WRECKED)
+            {
+                Log.LogBasic("~R[" + name + "]: " + currentState.description + ", " + "~W");
+            }
+
         }
     }
     public class Operatable : Block
@@ -196,7 +202,13 @@ namespace SpaceStation
         }
         public void GetLogs(Object o)
         {
-            //Log.LogBasic( "\n\r"+name + ","+CurrentState.MyState+":" + BackLog;
+            if (CurrentState.MyState != BlockStatus.DARK && CurrentState.MyState != BlockStatus.NOSTATUS)
+            {
+                Log.LogBasic("\n\r===\n\rBacklog of " + name + "," + CurrentState.MyState + ":" + BackLog);
+            }else
+            {
+                Log.LogWarning("\n\r===Error in connection to block...");
+            }
         }
     }
     public class ScifiBlock : Operatable

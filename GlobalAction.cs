@@ -7,7 +7,7 @@ namespace SpaceStation
  
     public class GlobalAction
     {
-        public delegate void ToDo(Block b, Object o);
+        public delegate bool ToDo(Block b, Object o);
         ToDo ActionExecutor;
         string Option;
         bool isBlockNumberNeeded;
@@ -20,9 +20,10 @@ namespace SpaceStation
         {
             ActionExecutor = TD;
         }
-        public void ExecuteAction(Block b, Object AdditionalParams)
+
+        public bool ExecuteAction(Block b, Object AdditionalParams)
         {
-            ActionExecutor(b, AdditionalParams);
+            return (ActionExecutor(b, AdditionalParams));
         }
         public string option { get => Option; set => Option = value; }
         public bool IsBlockNumberNeeded { get => isBlockNumberNeeded; set => isBlockNumberNeeded = value; }
