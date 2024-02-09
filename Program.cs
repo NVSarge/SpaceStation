@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json.Linq;
+using Python.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Python.Runtime;
 
 namespace SpaceStation
 {
@@ -57,7 +59,7 @@ namespace SpaceStation
     public static class Log
     {
         static List<LogRecord> records=new List<LogRecord>();
-
+        static List<LogRecord> temp_records = new List<LogRecord>();
         public static string GetRecords(int n=10)
         {
             int last = Math.Min(records.Count, n);
@@ -65,22 +67,42 @@ namespace SpaceStation
             for(int i = records.Count-last; i < records.Count; i++)
             {
                 retval += records[i].urgency + " [" + records[i].date + "] : " + records[i].message + "\n\r";
+            }for(int i =0; i < temp_records.Count; i++)
+            {
+                retval += temp_records[i].urgency + " [" + temp_records[i].date + "] : " + temp_records[i].message + "\n\r";
             }
+            temp_records.Clear();
             return retval;
+        }
+
+        public static void tLogBasic(string v)
+        {
+            temp_records.Add(new LogRecord(DayTime.Day, v, "~W"));
+
+        }
+        public static void tLogWarning(string v)
+        {
+            temp_records.Add(new LogRecord(DayTime.Day, v, "~Y"));
+
+        }
+        public static void tLogAlert(string v)
+        {
+            temp_records.Add(new LogRecord(DayTime.Day, v, "~R"));
+
         }
         public static void LogBasic(string v)
         {
-            records.Add(new LogRecord(DayTime.Day, v, "~W"));
+            temp_records.Add(new LogRecord(DayTime.Day, v, "~W"));
 
         }
         public static void LogWarning(string v)
         {
-            records.Add(new LogRecord(DayTime.Day, v, "~Y"));
+            temp_records.Add(new LogRecord(DayTime.Day, v, "~Y"));
 
         }
         public static void LogAlert(string v)
         {
-            records.Add(new LogRecord(DayTime.Day, v, "~R"));
+            temp_records.Add(new LogRecord(DayTime.Day, v, "~R"));
 
         }       
         
@@ -91,6 +113,17 @@ namespace SpaceStation
     {
         static void Main(string[] args)
         {
+            
+            /*System.Environment.SetEnvironmentVariable("PYTHONHOME", @"C:\ProgramData\Anaconda3\");
+            System.Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", @"C:\\ProgramData\\Anaconda3\\python38.dll");
+            PythonEngine.Initialize();
+            using(Py.GIL())
+                {
+                var pythonScript = Py.Import("myscript");
+                var arg = new PyString("2");
+                var result = pythonScript.InvokeMethod("execute_some", arg); 
+                }
+            /**/
 
             Station ISS = Station.Source;
             ISS.name = "ISS";
@@ -101,11 +134,11 @@ namespace SpaceStation
             ISS.manipulateRes(new Resourse("food", 300));
             ISS.manipulateRes(new Resourse("spares", 100));
 
-            ISS.DockBlock(new Operatable("green plant", new Resourse("water", 10), new Resourse("air", 10)));
-            ISS.DockBlock(new FarmingBlock("water refinery", new Resourse("zap", 1), new Resourse("water", 10), 1));
-            ISS.DockBlock(new Operatable("docking bay", new Resourse("zap", 1), new Resourse("pops", 1), 0));
+            ISS.DockBlock(new Operatable("green plant", new Resourse("water", 10), new Resourse("air", 10),0.1));
+            ISS.DockBlock(new FarmingBlock("water refinery", new Resourse("zap", 1), new Resourse("water", 10), 0.3));
+            ISS.DockBlock(new Operatable("docking bay", new Resourse("zap", 1), new Resourse("pops", 1), 0.5));
             ISS.DockBlock(new Operatable("solar panels", new Resourse("spares", 1), new Resourse("zap", 1), 0));
-            ISS.DockBlock(new ScifiBlock("orbit lab", new Resourse("zap", 1), new Resourse("spares", 1), 0));
+            ISS.DockBlock(new ScifiBlock("orbit lab", new Resourse("zap", 1), new Resourse("spares", 1), 0.1));
 
             ISS.switchBlock("water refinery", true);   
             ISS.switchBlock("docking bay", true);
@@ -324,7 +357,11 @@ namespace SpaceStation
             {
                 StationInfo = "";
             }
-            StationInfo += "~Wday ~G" + ISS.daysCycled + "~W";            
+            StationInfo += "~Wday ~G" + ISS.daysCycled + "~W";
+            if (ISS.Commodities.Reses.ContainsKey("chaos"))
+            { 
+            StationInfo += "~B total chaos:" + ISS.Commodities.Reses["chaos"].amount + "~W";
+            }
             if (isDetailed)
             {
                 StationInfo += ISS.FormStationInfo();

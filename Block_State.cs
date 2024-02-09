@@ -27,14 +27,14 @@
             probab = 0;
         }
 
-        public Block_State(string name, string description, BlockStatus newState, Resourse resModify, double probab, Resourse impact)
+        public Block_State(string name, string description, BlockStatus newState, Resourse outRes, double probab, Resourse consumeRes)
         {
             this.name = name;
             this.description = description;
             this.MyState = newState;
-            this.Output = resModify;
+            this.Output = outRes;
             this.Probab = probab;
-            this.Impact = impact;
+            this.Impact = consumeRes;
             newActions = new Ui();
         }
 

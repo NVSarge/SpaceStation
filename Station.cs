@@ -174,7 +174,7 @@ namespace SpaceStation
         {
             if (b.CurrentState.MyState == BlockStatus.ALERT)
             {
-                b.CallEvent("fire extinguished", Commodities, population, daysCycled);
+                b.CallEvent("fire extinguished", Commodities, population);
             }
             return true;
         }
@@ -183,7 +183,7 @@ namespace SpaceStation
         {
             if (b.CurrentState.MyState == BlockStatus.WRECKED)
             {
-                b.CallEvent("repaired", Commodities, population, daysCycled);
+                b.CallEvent("repaired", Commodities, population);
             }
             return true;
         }
@@ -331,6 +331,10 @@ namespace SpaceStation
                 {
                     Commodities.Reses[r.name].amount += r.amount;
                 }
+                else
+                {
+                    Commodities.Reses.Add(r.name,new Resourse(r.name, r.amount));
+                }
                 b = b.Next;
             }
             for (int i = 0; i < LowOrbit.Count; i++)
@@ -404,21 +408,24 @@ namespace SpaceStation
             foreach (var r in Commodities.Reses)
             {
                 int trend = 0;
-                if (ResTrend.ContainsKey(r.Key))
+                if (!r.Key.Equals("chaos"))
                 {
-                    trend = -ResTrend[r.Key];
-                }
-                string trendcolored = "";
-                if (trend < 0)
-                {
-                    trendcolored = "~R↓" + -trend + "~W";
+                    if (ResTrend.ContainsKey(r.Key))
+                    {
+                        trend = -ResTrend[r.Key];
+                    }
+                    string trendcolored = "";
+                    if (trend < 0)
+                    {
+                        trendcolored = "~R↓" + -trend + "~W";
 
+                    }
+                    else
+                    {
+                        trendcolored = "~G↑" + trend + "~W";
+                    }
+                    retval += r.Key + "=" + Math.Max(0, r.Value.amount) + "⌂" + "(" + trendcolored + ")" + "   ";
                 }
-                else
-                {
-                    trendcolored = "~G↑" + trend + "~W";
-                }
-                retval += r.Key + "=" + Math.Max(0, r.Value.amount) + "⌂" + "(" + trendcolored + ")" + "   ";
             }
             retval += "\n\r│--------------------------------------------------------------\n\r\n\r";
            

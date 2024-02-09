@@ -32,7 +32,7 @@ namespace SpaceStation
             avaliableEvents.Add(new Block_State("on", "all systems online", BlockStatus.OK, P, 0.0, C));
             avaliableEvents.Add(new Block_State("off", "all systems offline", BlockStatus.DARK, null, 0.0, null));
             avaliableEvents.Add(new Block_State("repaired", "repair system neutralized threat", BlockStatus.DARK, new Resourse("chaos", 1), 0.0, new Resourse("spares", 1)));
-            avaliableEvents.Add(new Block_State("explosion", "some oxigen canister has exploded in flames", BlockStatus.ALERT, new Resourse("fire", 1), 0.3, new Resourse("pops", 1)));
+            avaliableEvents.Add(new Block_State("explosion", "some oxigen canister has exploded in flames", BlockStatus.ALERT, new Resourse("chaos", 1), 0.3, new Resourse("pops", 1)));
             avaliableEvents.Add(new Block_State("fire extinguished", "fire supress system neutralized threat", BlockStatus.WRECKED, new Resourse("chaos", 1), 0.0, new Resourse("water", 1)));            
             avaliableEvents.Add(new Block_State("normal", "system operates normal", BlockStatus.NOSTATUS, null, 1.0,null));
             ///
@@ -59,23 +59,23 @@ namespace SpaceStation
             {
                 if(currentState.MyState == BlockStatus.DARK)
                 {
-                    CallEvent("on", null, 0, 0);
+                    CallEvent("on", null, 0);
                 }
             }else
             {
                 if(currentState.MyState == BlockStatus.OK)
                 {
-                    CallEvent("off", null, 0, 0);
+                    CallEvent("off", null, 0);
                 }    
             }
         }
-        public void CallEvent(string name, Resourses rr, double pop, int cyclenum)
+        public void CallEvent(string name, Resourses rr, double pop)
         {
             foreach (var e in avaliableEvents)
             {
                 if(e.name.Equals(name))
                 {
-                    OperateEvent(rr, pop, cyclenum, e);
+                    OperateEvent(rr, pop,e);
                     break;
                 }
             }
@@ -122,7 +122,7 @@ namespace SpaceStation
                             if (FirstTohappen.MyState != BlockStatus.NOSTATUS)
                             {
                                 BackLog += "\n\r.." + DayTime.Day + "..:STATUS YELLOW";
-                                OperateEvent(rr, pop, cyclenum, FirstTohappen);
+                                currentState = FirstTohappen;
                             }
                         }
                         ///
@@ -139,29 +139,39 @@ namespace SpaceStation
                     currentState.MyState = BlockStatus.DARK;
                     break;
             }
-            if(currentState.MyState != BlockStatus.DARK&& currentState.MyState != BlockStatus.NOSTATUS)
-            if (rr.Reses.ContainsKey(currentState.Impact.name))
+            if (currentState.MyState != BlockStatus.DARK && currentState.MyState != BlockStatus.NOSTATUS)
             {
-                double a = rr.Reses[currentState.Impact.name].amount;
-                if (a >= currentState.Impact.amount)
-                {
-                    rr.Reses[currentState.Impact.name].amount -= currentState.Impact.amount + pop * popmult;
-                }
-                else
-                {
-                    retval.amount = 1 + pop * popmult;
-                    retval.name = "chaos";
-                }
-            }
+                retval = OperateEvent(rr, pop,currentState);
+            }            
             return retval;
 
            
         }
-        void OperateEvent(Resourses reses, double populus, int cnum, Block_State FirstTohappen)
+        Resourse OperateEvent(Resourses reses, double populus, Block_State FirstTohappen)
         {
             currentState = FirstTohappen;
-            
-            if(DayTime.Day!=0)
+            Resourse retval = new Resourse("chaos", 0);
+            if (reses != null)
+            {
+                if (reses.Reses.ContainsKey(currentState.Impact.name))
+                {
+                    double a = reses.Reses[currentState.Impact.name].amount;
+                    if (a >= currentState.Impact.amount + populus * popmult)
+                    {
+                        reses.Reses[currentState.Impact.name].amount -= Math.Floor(currentState.Impact.amount + populus * popmult);
+                    }
+                    else
+                    {
+                        reses.Reses[currentState.Impact.name].amount = 0;
+                        retval.amount = 1 + populus * popmult;
+                        retval.name = "chaos";
+                    }
+                }
+            }
+            retval = new Resourse(currentState.Output.name, currentState.Output.amount + populus * popmult);
+
+
+            if (DayTime.Day!=0)
             {
                 BackLog += "\n\r.." + +DayTime.Day +".. "+currentState.description + " " + description;
             }
@@ -173,7 +183,7 @@ namespace SpaceStation
             {
                 Log.LogBasic("~R[" + name + "]: " + currentState.description + ", " + "~W");
             }
-
+            return retval;
         }
     }
     public class Operatable : Block
@@ -204,10 +214,15 @@ namespace SpaceStation
         {
             if (CurrentState.MyState != BlockStatus.DARK && CurrentState.MyState != BlockStatus.NOSTATUS)
             {
-                Log.LogBasic("\n\r===\n\rBacklog of " + name + "," + CurrentState.MyState + ":" + BackLog);
-            }else
+                Log.tLogBasic("\n\r===\n\rBacklog of " + name + "," + CurrentState.MyState + ":" );
+                string RES = "\n\r Resources:";
+                RES += "\n\r>>" + CurrentState.Impact.name + " (" + CurrentState.Impact.amount+ ")";
+                RES += "\n\r<<" + CurrentState.Output.name + " (" + CurrentState.Output.amount + ")";
+                Log.tLogBasic("\n\r"+RES+"\n\r"+BackLog);
+            }
+            else
             {
-                Log.LogWarning("\n\r===Error in connection to block...");
+                Log.tLogWarning("\n\r===Error in connection to block...");
             }
         }
     }
@@ -226,7 +241,7 @@ namespace SpaceStation
             if (rr.Reses.ContainsKey(CurrentState.Output.name))
             {
                 rr.Reses[CurrentState.Output.name].amount += CurrentState.Output.amount *2;
-                CallEvent("develop", rr, ((Station)o).population, ((Station)o).daysCycled);
+                CallEvent("develop", rr, ((Station)o).population);
 
             }
             BackLog += "\n\r"+DayTime.Day+" extra resourses developed";
@@ -249,7 +264,7 @@ namespace SpaceStation
             if(rr.Reses.ContainsKey(CurrentState.Output.name))
             {
                 rr.Reses[CurrentState.Output.name].amount += CurrentState.Output.amount * 3;
-                CallEvent("harvested", rr, ((Station)o).population, ((Station)o).daysCycled);
+                CallEvent("harvested", rr, ((Station)o).population);
 
             }
             BackLog += "\n\r" + DayTime.Day + " extra resourses harvested";
