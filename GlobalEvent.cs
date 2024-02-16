@@ -5,7 +5,7 @@ using System.IO;
 
 namespace SpaceStation
 {
-    public class GlobalEvent
+    public class GlobalEvent  //local events must be produced?
     {
         double probability;
 
@@ -50,7 +50,7 @@ namespace SpaceStation
 
         public void AddOpts(List<string> o, List<string> res, List<Block> b)
         {
-
+            if(o!=null&&res!=null&&b!=null) 
             for (int i = 0; i < o.Count; i++)
             {
                 if (i < res.Count && i < b.Count)

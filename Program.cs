@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Python.Runtime;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace SpaceStation
 {
@@ -15,7 +17,7 @@ namespace SpaceStation
         {
             if (dice == null)
             {
-                dice = new Random();
+                dice = new Random(DateTime.Now.Millisecond);
             }
             return dice.NextDouble();
         }
@@ -32,7 +34,7 @@ namespace SpaceStation
 
     public static class DayTime
     {
-        static int day;   
+        static int day;
         public static int Day { get => day; set => day = value; }
     }
 
@@ -40,7 +42,7 @@ namespace SpaceStation
     {
         public int date;
         public string message;
-        public  string urgency; // color code
+        public string urgency; // color code
         public LogRecord()
         {
             date = 0;
@@ -58,18 +60,22 @@ namespace SpaceStation
 
     public static class Log
     {
-        static List<LogRecord> records=new List<LogRecord>();
+        static List<LogRecord> records = new List<LogRecord>();
         static List<LogRecord> temp_records = new List<LogRecord>();
-        public static string GetRecords(int n=10)
+        public static string GetRecords(int n = 10)
         {
             int last = Math.Min(records.Count, n);
             string retval = "";
-            for(int i = records.Count-last; i < records.Count; i++)
+            if (temp_records.Count == 0)
             {
-                retval += records[i].urgency + " [" + records[i].date + "] : " + records[i].message + "\n\r";
-            }for(int i =0; i < temp_records.Count; i++)
+                for (int i = records.Count - last; i < records.Count; i++)
+                {
+                    retval += records[i].urgency + " [" + records[i].date + "] : " + records[i].message + "\n\r";
+                }
+            }
+            for (int i = 0; i < temp_records.Count; i++)
             {
-                retval += temp_records[i].urgency + " [" + temp_records[i].date + "] : " + temp_records[i].message + "\n\r";
+                retval += temp_records[i].urgency + temp_records[i].message + "\n\r";
             }
             temp_records.Clear();
             return retval;
@@ -104,8 +110,8 @@ namespace SpaceStation
         {
             temp_records.Add(new LogRecord(DayTime.Day, v, "~R"));
 
-        }       
-        
+        }
+
 
     }
 
@@ -113,7 +119,7 @@ namespace SpaceStation
     {
         static void Main(string[] args)
         {
-            
+
             /*System.Environment.SetEnvironmentVariable("PYTHONHOME", @"C:\ProgramData\Anaconda3\");
             System.Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", @"C:\\ProgramData\\Anaconda3\\python38.dll");
             PythonEngine.Initialize();
@@ -134,13 +140,13 @@ namespace SpaceStation
             ISS.manipulateRes(new Resourse("food", 300));
             ISS.manipulateRes(new Resourse("spares", 100));
 
-            ISS.DockBlock(new Operatable("green plant", new Resourse("water", 10), new Resourse("air", 10),0.1));
+            ISS.DockBlock(new Operatable("green plant", new Resourse("water", 10), new Resourse("air", 10), 0.1));
             ISS.DockBlock(new FarmingBlock("water refinery", new Resourse("zap", 1), new Resourse("water", 10), 0.3));
             ISS.DockBlock(new Operatable("docking bay", new Resourse("zap", 1), new Resourse("pops", 1), 0.5));
             ISS.DockBlock(new Operatable("solar panels", new Resourse("spares", 1), new Resourse("zap", 1), 0));
             ISS.DockBlock(new ScifiBlock("orbit lab", new Resourse("zap", 1), new Resourse("spares", 1), 0.1));
 
-            ISS.switchBlock("water refinery", true);   
+            ISS.switchBlock("water refinery", true);
             ISS.switchBlock("docking bay", true);
 
             ///
@@ -184,30 +190,32 @@ namespace SpaceStation
             ActionList.Actions.Add(Apower);
 
             ISS.AddgEvent("Robonuka", 0.0, "Robonuka holiday! All robots get drunk", "none", new Resourse("pops", 13),
-                new List<string>() { "ignore", "give them one extra rest hour" }, new List<string>() { "robots continue to work", "celebration attracts flying by robo-temple" }, new List<Block>() {null, new ScifiBlock("robotemple", new Resourse("spares", 1), new Resourse("zap", 1), 0) });
+                new List<string>() { "ignore", "give them one extra rest hour" }, new List<string>() { "robots continue to work", "celebration attracts flying by robo-temple" }, new List<Block>() { null, new ScifiBlock("robotemple", new Resourse("spares", 1), new Resourse("zap", 1), 0) });
+
+            ISS.AddgEvent("Meteorite", 0.1, "Meteorite hits station", "none", new Resourse("pops", 1),
+                new List<string>() { "automatics emerged safety protocols minimizing damage" }, new List<string>() { "fires and broken devices everythere" }, new List<Block>() { new Block("stationwide", new Resourse("water", -100), new Resourse("pops", -10)) });
             
-            ISS.AddgEvent("Meteorite", 0.5, "Meteorite hits station", "none", new Resourse("pops", 1),
-                new List<string>() { "minimize risks" }, new List<string>() { "fires and broken devices everythere" }, new List<Block>() { new Block("stationwide", new Resourse("water", -100), new Resourse("pops",-10))});
 
-          //  ISS.AddgEvent("Traveler", 0.5, "Misterious traveler docks station", "docking bay", new Resourse("pops", 1),
-           //     new List<string>() { "welcome" ,"cast out" }, new List<string>() { "He walks around and brings you some presents","Angry noises" }, new List<Block>() { new Block("stationwide", new Resourse("spares", 100), new Resourse("pops", 1)),null });
+            //  ISS.AddgEvent("Traveler", 0.5, "Misterious traveler docks station", "docking bay", new Resourse("pops", 1),
+            //     new List<string>() { "welcome" ,"cast out" }, new List<string>() { "He walks around and brings you some presents","Angry noises" }, new List<Block>() { new Block("stationwide", new Resourse("spares", 100), new Resourse("pops", 1)),null });
 
-            ISS.loadgEventfromjson("Traveler.json");
+            // ISS.loadgEventfromjson("Traveler.json");
 
             bool isEnd = false;
             ISS.CycleDay();
             while (!isEnd)
             {
+                OperateGlobalEvents(ISS);
 
                 //isEnd = isEnd;
 
-                PrintDecorated("\n\rEvents Log:\n\r" + Log.GetRecords());
+                PrintDecorated("\n\rEvents Log, DAY " + DayTime.Day + ":\n\r" + Log.GetRecords());
                 Console.Write("\n\rPress any key...");
-                Console.ReadLine();
+                Console.ReadKey();
                 Console.Clear();
 
                 Report(ISS);
-                
+
                 //block info
                 Console.WriteLine("\n\rYou are in [" + ISS.Walkin.name + "],(" + ISS.Walkin.CurrentState.MyState + "):");
                 var uis = ISS.Walkin.BlockActions.FormActionList();
@@ -253,7 +261,7 @@ namespace SpaceStation
                             {
                                 Act.ExecuteAction(null, ISS);
                                 Console.Clear();
-                               
+
 
                             }
                         }
@@ -265,13 +273,13 @@ namespace SpaceStation
                         var la = ISS.Walkin.BlockActions.lActions.ElementAt(loclaopt);
                         la.ExecuteAction(ISS);
                         Console.Clear();
-                     
+
 
                     }
                 }
                 Console.Clear();
-                //OperateGlobalEvents(ISS);
-              
+               
+
 
             }
             Console.Clear();
@@ -280,7 +288,7 @@ namespace SpaceStation
             {
                 foreach (var ge in station.happened)
                 {
-                    
+
                     Console.WriteLine(ge.GetDesc());
                     var opts = ge.GetInitSelections();
                     while (opts != null)
@@ -289,31 +297,54 @@ namespace SpaceStation
                         string Sel = "";
                         foreach (var o in opts)
                         {
-                           Sel+="~G"+i + ". " + o+"~W";
+                            if (opts.Count > 1)
+                            {
+                                Sel += "~G" + i + ". " + o + "~W";
+                            }
+                            else
+                            {
+                                Sel += "~G" + ">>" + o + "~W";
+                            }
                             i++;
                         }
                         PrintDecorated(Sel);
 
                         var input = "";
                         int inpo = -1;
-                        while (inpo < 0 || inpo > opts.Count)
+                        if (opts.Count() > 1)
                         {
-                            while (!int.TryParse(input, out inpo))
+                            while (inpo < 0 || inpo > opts.Count)
                             {
+                                while (!int.TryParse(input, out inpo))
+                                {
 
-                                Console.Write(":>");
-                                input = Console.ReadLine();
+                                    Console.Write(":>");
+                                    input = Console.ReadLine();
+                                }
                             }
                         }
-
+                        else
+                        {
+                            inpo = 1;
+                            Console.Write("Press any key...");
+                            Console.ReadKey();
+                        }
                         var res = ge.GetResult(opts.ElementAt(inpo - 1));
-                        Console.WriteLine(res.Item1.outcome);
+                        PrintDecorated(res.Item1.outcome);
+                        Console.Write("Press any key...");
+                        Console.ReadKey();
                         if (res.Item2 != null)
                         {
                             if (res.Item2.name.Equals("stationwide")) //global event type selector
                             {
-                                station.manipulateRes(res.Item2.CurrentState.Output);
-                                station.manipulateRes(res.Item2.CurrentState.Impact);
+                                if (res.Item2.CurrentState.Output != null)
+                                {
+                                    station.manipulateRes(res.Item2.CurrentState.Output);
+                                }
+                                if (res.Item2.CurrentState.Impact != null)
+                                {
+                                    station.manipulateRes(res.Item2.CurrentState.Impact);
+                                }
                             }
                             else
                             {
@@ -327,16 +358,18 @@ namespace SpaceStation
                             Sel = "";
                             foreach (var o in newOpts)
                             {
-                                Sel+="~G"+o.outcome+"~W";
+                                Sel += "~G" + o.outcome + "~W";
                                 opts.Add(o.selector);
                             }
                             PrintDecorated(Sel);
 
-                        }else
+                        }
+                        else
                         {
                             opts = null;
                         }
-                        
+
+
                     }
 
                 }
@@ -359,8 +392,8 @@ namespace SpaceStation
             }
             StationInfo += "~Wday ~G" + ISS.daysCycled + "~W";
             if (ISS.Commodities.Reses.ContainsKey("chaos"))
-            { 
-            StationInfo += "~B total chaos:" + ISS.Commodities.Reses["chaos"].amount + "~W";
+            {
+                StationInfo += "~B total chaos:" + ISS.Commodities.Reses["chaos"].amount + "~W";
             }
             if (isDetailed)
             {
@@ -369,19 +402,32 @@ namespace SpaceStation
 
             //printout
             PrintDecorated(StationInfo);
-          
+
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
         }
 
         private static void PrintDecorated(string outString)
         {
+
             if (outString.Length > 0)
             {
-                var decoratedstrings = outString.Split(new char[] { '~' }, StringSplitOptions.RemoveEmptyEntries); //~X -set color X= R-red G-green B-blue C-cyan Y-yellow M-magenta K-black W-white A-gray
                 Console.ForegroundColor = ConsoleColor.White;
-                if (decoratedstrings.Length > 1)
+                var sLines = outString.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in sLines)
                 {
+
+                    var t = Task.Run(async delegate
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(Roll.getNext() * 0.2));
+                    });
+                    t.Wait();/**/
+                    string decoratedLine = line;
+                    if (line[0] != '~')
+                    {
+                        decoratedLine = "~W" + decoratedLine;
+                    }
+                    var decoratedstrings = decoratedLine.Split(new char[] { '~' }, StringSplitOptions.RemoveEmptyEntries); //~X -set color X= R-red G-green B-blue C-cyan Y-yellow M-magenta K-black W-white A-gray
                     foreach (var ds in decoratedstrings)
                     {
                         char L = ds[0];
@@ -418,14 +464,11 @@ namespace SpaceStation
                         }
                         string subDs = ds.Substring(1);
                         Console.Write(subDs);
-
-
                     }
+
+                    Console.WriteLine();
                 }
-                else
-                {
-                    Console.Write(decoratedstrings[0]);
-                }
+
             }
         }
     }

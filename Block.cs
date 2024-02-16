@@ -168,7 +168,10 @@ namespace SpaceStation
                     }
                 }
             }
-            retval = new Resourse(currentState.Output.name, currentState.Output.amount + populus * popmult);
+            if (currentState.Output != null)
+            {
+                retval = new Resourse(currentState.Output.name, currentState.Output.amount + populus * popmult);
+            }
 
 
             if (DayTime.Day!=0)
@@ -214,11 +217,11 @@ namespace SpaceStation
         {
             if (CurrentState.MyState != BlockStatus.DARK && CurrentState.MyState != BlockStatus.NOSTATUS)
             {
-                Log.tLogBasic("\n\r===\n\rBacklog of " + name + "," + CurrentState.MyState + ":" );
-                string RES = "\n\r Resources:";
+                Log.tLogBasic("\n\r===\n\rBacklog of " + name + ":" );
+                string RES = "Resources:";
                 RES += "\n\r>>" + CurrentState.Impact.name + " (" + CurrentState.Impact.amount+ ")";
                 RES += "\n\r<<" + CurrentState.Output.name + " (" + CurrentState.Output.amount + ")";
-                Log.tLogBasic("\n\r"+RES+"\n\r"+BackLog);
+                Log.tLogBasic(RES+"\n\r"+BackLog+ "\n\rSTATUS:"+CurrentState.MyState);
             }
             else
             {

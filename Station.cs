@@ -50,8 +50,8 @@ namespace SpaceStation
         }
         public void AddgEvent(string name, double p, string d, string prereqb, Resourse R, List<string> opts, List<string> res, List<Block> bl)
         {
-            GlobalEvent ge = new GlobalEvent(p, name, d,prereqb,R);
-            ge.AddOpts(opts, res,bl);
+            GlobalEvent ge = new GlobalEvent(p, name, d, prereqb, R);
+            ge.AddOpts(opts, res, bl);
             gEvents.Add(ge);
         }
 
@@ -201,7 +201,7 @@ namespace SpaceStation
 
         public bool SummonBlockLO(Block b, Object o = null)
         {
-           
+
             b.switchPower(false);
             LowOrbit.Add(new Tuple<Block, int>(b, 10));
             return true;
@@ -209,7 +209,7 @@ namespace SpaceStation
 
         public bool EndDay(Block b, Object o = null)
         {
-            bool retval=((Station)o).CycleDay();
+            bool retval = ((Station)o).CycleDay();
             return retval;
         }
 
@@ -230,8 +230,8 @@ namespace SpaceStation
         public string name { get => Name; set => Name = value; }
 
         public int population { get => (int)Commodities.Reses["pops"].amount; set => Commodities.Reses["pops"].amount = value; }
-        
-        public int daysCycled { get => DayTime.Day; set =>DayTime.Day = value; }
+
+        public int daysCycled { get => DayTime.Day; set => DayTime.Day = value; }
         public Resourses Commodities { get => commodities; set => commodities = value; }
 
         Resourses commodities;
@@ -319,7 +319,6 @@ namespace SpaceStation
 
         public bool CycleDay()
         {
-            Random rnd=new Random(DateTime.Now.Millisecond);
             daysCycled++;
             population = CheckPopulation();
             CheckResourses();
@@ -333,7 +332,7 @@ namespace SpaceStation
                 }
                 else
                 {
-                    Commodities.Reses.Add(r.name,new Resourse(r.name, r.amount));
+                    Commodities.Reses.Add(r.name, new Resourse(r.name, r.amount));
                 }
                 b = b.Next;
             }
@@ -351,29 +350,53 @@ namespace SpaceStation
                 }
             }
             happened.Clear();
-            foreach(var ge in gEvents)
+            double maxProb = 0.0;
+            double probCum = 0.0;
+            double roll = Roll.getNext();
+
+
+            foreach (var ge in gEvents)
             {
-                double p = ge.Probability;
-                if(p>rnd.NextDouble())
+                if (Commodities.Reses.ContainsKey(ge.Prereq.name))
                 {
-                    if (Commodities.Reses.ContainsKey(ge.Prereq.name))
+                    if (Commodities.Reses[ge.Prereq.name].amount >= ge.Prereq.amount)
                     {
-                        if (Commodities.Reses[ge.Prereq.name].amount >=ge.Prereq.amount)
+                        bool isBLock = false;
+                        foreach (var bl in Blocks)
                         {
-                            bool isBLock = false;
-                            foreach (var bl in Blocks)
+                            if ((bl.name.Equals(ge.PrereqBlock) && bl.isOnline()) || ge.PrereqBlock.Equals("none"))
                             {
-                                if ((bl.name.Equals(ge.PrereqBlock)&&bl.isOnline())||ge.PrereqBlock.Equals("none"))
-                                {
-                                    isBLock = true;
-                                }
-                            }
-                            if (isBLock)
-                            {
-                                happened.Add(ge);
+                                isBLock = true;
                             }
                         }
+                        if (isBLock)
+                        {
+                            maxProb += ge.Probability;
+                            happened.Add(ge);
+                        }
                     }
+                }
+
+
+            }
+            if (happened.Count > 0)
+            {
+                GlobalEvent Ge = new GlobalEvent(0.1, "none", "", "none", null); //global event total prob stub
+                maxProb += Ge.Probability;
+                happened.Add(Ge);
+                foreach (var ha in happened)
+                {
+                    probCum += ha.Probability / maxProb;
+                    if (probCum > roll)
+                    {
+                        Ge= ha;
+                        break;
+                    }
+                }
+                happened.Clear();
+                if (!Ge.GetName().Equals("none"))
+                {
+                    happened.Add(Ge);
                 }
             }
             CalcTrend();
@@ -403,8 +426,9 @@ namespace SpaceStation
 
         public string FormStationInfo()
         {
-            string retval = "\n\r";
-            retval += "\n\r│Storage-------------------------------------------------------\n\r│";
+            string retval = "  (~Y┌☻┐-you,~M└¤┘-enemy~W)\n\r";
+            retval += "\n\r │Storage-------------------------------------------------------";
+            retval += "\n\r │";
             foreach (var r in Commodities.Reses)
             {
                 int trend = 0;
@@ -427,54 +451,58 @@ namespace SpaceStation
                     retval += r.Key + "=" + Math.Max(0, r.Value.amount) + "⌂" + "(" + trendcolored + ")" + "   ";
                 }
             }
-            retval += "\n\r│--------------------------------------------------------------\n\r\n\r";
-           
-            retval += "/"+name+ "(~Y┌☻┐-you,~M└¤┘-enemy~W)------------------------------------\n\r";
+            retval += "\n\r │--------------------------------------------------------------\n\r\n\r";
+
+            retval += "---" + name + "---\n\r";
             foreach (var b in Blocks)
             {
                 string me = "";
                 if (b == Walkin)
                 {
-                    me = "~Y┌☻┐~W";
+                    me = "~Y┌☻┐";
                 }
                 if (b == Alien)
                 {
-                    me = "~M└¤┘~W";
+                    me = "~M└¤┘";
                 }
                 string blockView = "";
-                switch(b.CurrentState.MyState)
+                switch (b.CurrentState.MyState)
                 {
                     case BlockStatus.OK:
-                        blockView = "~G╣▒▒" + b.name + me + "▒▒╠~W";
-                        break;                    
+                        blockView = "~G╣▒▒" + b.name + me + "~G▒▒╠~W";
+                        break;
                     case BlockStatus.ALERT:
-                        blockView = "~R╣▒▒" + b.name + me + "▒▒╠~W";
+                        blockView = "~R╣▒▒" + b.name + me + "~R▒▒╠~W";
                         break;
                     default:
-                        blockView = "~A╣▒▒" + b.name + me + "▒▒╠~W";
+                        blockView = "~A╣▒▒" + b.name + me + "~A▒▒╠~W";
                         break;
                 }
 
-                
+
 
 
 
                 retval += blockView;
-                
+
                 if (Blocks.Find(b).Next != null)
                 {
                     retval += "══";
                 }
             }
-            retval += "\n\r\\--------------------------------------------------------------\n\r\n\r";
-            retval += "/LowOrbit------------------------------------------------------\n\r";
-            
-            foreach (var b in LowOrbit)
+            retval += "\n\r \n\r";
+            retval += "---lowOrbit---";
+            if (LowOrbit.Count == 0)
             {
-                retval += "[" + b.Item1.name + "]" + "(" + b.Item2 + " days left)" + "\n\r";
+                retval += "\n\r...empty...";
             }
-
-            retval += "\n\r\\--------------------------------------------------------------\n\r";
+            else
+            {
+                foreach (var b in LowOrbit)
+                {
+                    retval += "[" + b.Item1.name + "]" + "(" + b.Item2 + " days left)" + "\n\r ";
+                }
+            }
             return retval;
         }
 
